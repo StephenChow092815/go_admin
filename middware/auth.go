@@ -17,7 +17,7 @@ func GenerateToken(uid uint) string {
 		// 签发时间
 		"iat": time.Now().Unix(),
 		// 设定过期时间，便于测试，设置1分钟过期
-		"exp": time.Now().Add(1 * time.Minute * time.Duration(1)).Unix(),
+		"exp": time.Now().Add(7 * 24 * 60 * time.Minute * time.Duration(1)).Unix(),
 	})
 	tokenString, _ := token.SignedString(SigKey)
 

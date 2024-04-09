@@ -19,6 +19,7 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
+	github.com/iris-contrib/middleware/cors v0.0.0-20240111010557-e34016a4d6ee // indirect
 	github.com/iris-contrib/middleware/jwt v0.0.0-20240111010557-e34016a4d6ee // indirect
 	github.com/iris-contrib/schema v0.0.6 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect

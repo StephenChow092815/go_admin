@@ -57,6 +57,7 @@ func Register(app *iris.Application) {
 	app.Post("/login", controller.Login)
 	app.Post("/register", controller.Register)
 	userhandler.Get("/", j.Serve, controller.GetUsers)
+	userhandler.Post("/info", j.Serve, controller.GetUserInfo)
 	commonhandler.Post("/upload", j.Serve, controller.UploadFile)
 
 	// 分类模块
