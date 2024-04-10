@@ -1,33 +1,39 @@
 package controller
 
-
 import (
-	"github.com/kataras/iris/v12"
-	"irisweb/provider"
-	"irisweb/model"
-	"time"
 	"fmt"
-	"strconv"
+	"irisweb/model"
+	"irisweb/provider"
+	"time"
+
+	"github.com/kataras/iris/v12"
 )
 
 // 查询分类列表
 func GetGoodsList(ctx iris.Context) {
 	var db = provider.GetDefaultDB()
 	var goodss []model.Goods
-	
+
 	result := db.Find(&goodss)
 	if result.Error != nil {
-        fmt.Printf("查询数据失败：%v", result.Error)
-    }
+		fmt.Printf("查询数据失败：%v", result.Error)
+	}
 	ctx.JSON(iris.Map{
 		"code": 200,
 		"data": goodss,
 		"msg":  "Success",
 	})
 }
+
 // 新增分类
 func AddGoods(ctx iris.Context) {
-	goodsName := ctx.PostValue("name") 
+	requestJSON := make(map[string]interface{})
+	if err := ctx.ReadJSON(&requestJSON); err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid JSON"})
+	}
+	goodsName := requestJSON["name"].(string)
+
 	var db = provider.GetDefaultDB()
 	var goodss []model.Goods
 	var goods model.Goods
@@ -35,11 +41,13 @@ func AddGoods(ctx iris.Context) {
 	if len(goodss) == 0 {
 		// 数据不存在
 		goods.Name = goodsName
-		goods.Description = ctx.PostValue("description") 
-		goods.Price = ctx.PostValue("price") 
-		goods.Url = ctx.PostValue("url")
-		id,_ := strconv.Atoi(ctx.PostValue("categoryId"))
-		goods.CategoryId = id
+		goods.Description = requestJSON["description"].(string)
+		goods.Price = requestJSON["price"].(string)
+		goods.Url = requestJSON["url"].(string)
+		categoryId := requestJSON["category_id"].(float64)
+		// // id, _ := strconv.Atoi(categoryId)
+		fmt.Printf("%s is an int: %d\n", "categoryId", categoryId)
+		goods.CategoryId = categoryId
 		goods.CreatedTime = time.Now().Unix()
 		result := db.Create(&goods)
 		if result.Error != nil {
@@ -64,9 +72,15 @@ func AddGoods(ctx iris.Context) {
 		})
 	}
 }
+
 // 编辑分类
 func EditGoods(ctx iris.Context) {
-	id := ctx.PostValue("id") 
+	requestJSON := make(map[string]interface{})
+	if err := ctx.ReadJSON(&requestJSON); err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid JSON"})
+	}
+	id := requestJSON["id"].(float64)
 	var db = provider.GetDefaultDB()
 	var goodss []model.Goods
 	db.Find(&goodss, "id = ?", id)
@@ -76,14 +90,15 @@ func EditGoods(ctx iris.Context) {
 		db.Where("id = ?", id).Take(&goods)
 
 		data := make(map[string]interface{})
-		data["name"] = ctx.PostValue("name")  //零值字段
-		data["description"] = ctx.PostValue("description")
-		data["price"] = ctx.PostValue("price")
-		data["url"] = ctx.PostValue("url")
-		category_id,_ := strconv.Atoi(ctx.PostValue("categoryId"))
+		data["name"] = requestJSON["name"].(string) //零值字段
+		data["description"] = requestJSON["description"].(string)
+		data["price"] = requestJSON["price"].(string)
+		data["url"] = requestJSON["url"].(string)
+		category_id := requestJSON["category_id"].(float64)
+		fmt.Printf("%s is an int: %d\n", "categoryId", category_id)
 		data["category_id"] = category_id
 		data["updated_time"] = time.Now().Unix()
-		
+
 		result := db.Model(&goods).Updates(data)
 		if result.Error != nil {
 			ctx.JSON(iris.Map{
@@ -107,9 +122,15 @@ func EditGoods(ctx iris.Context) {
 		})
 	}
 }
+
 // 删除分类
 func DeleteGoods(ctx iris.Context) {
-	id := ctx.PostValue("id")
+	requestJSON := map[string]float64{}
+	if err := ctx.ReadJSON(&requestJSON); err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid JSON"})
+	}
+	id := requestJSON["id"]
 	var db = provider.GetDefaultDB()
 	var goodss []model.Goods
 	db.Find(&goodss, "id = ?", id)
@@ -118,8 +139,6 @@ func DeleteGoods(ctx iris.Context) {
 
 		db.Where("id = ?", id).Take(&goods)
 
-		
-		
 		result := db.Delete(&goods)
 		if result.Error != nil {
 			ctx.JSON(iris.Map{

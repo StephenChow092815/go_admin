@@ -1,31 +1,39 @@
 package controller
 
 import (
-	"github.com/kataras/iris/v12"
-	"irisweb/provider"
-	"irisweb/model"
-	"time"
 	"fmt"
+	"irisweb/model"
+	"irisweb/provider"
+	"time"
+
+	"github.com/kataras/iris/v12"
 )
 
 // 查询分类列表
 func GetCategoryList(ctx iris.Context) {
 	var db = provider.GetDefaultDB()
 	var categorys []model.Category
-	
+
 	result := db.Find(&categorys)
 	if result.Error != nil {
-        fmt.Printf("查询数据失败：%v", result.Error)
-    }
+		fmt.Printf("查询数据失败：%v", result.Error)
+	}
 	ctx.JSON(iris.Map{
 		"code": 200,
 		"data": categorys,
 		"msg":  "Success",
 	})
 }
+
 // 新增分类
 func AddCategory(ctx iris.Context) {
-	categoryname := ctx.PostValue("name") 
+	requestJSON := map[string]string{}
+	if err := ctx.ReadJSON(&requestJSON); err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid JSON"})
+	}
+	categoryname := requestJSON["name"]
+	tag := requestJSON["tag"]
 	var db = provider.GetDefaultDB()
 	var categorys []model.Category
 	var category model.Category
@@ -33,6 +41,7 @@ func AddCategory(ctx iris.Context) {
 	if len(categorys) == 0 {
 		// 数据不存在
 		category.Name = categoryname
+		category.Tag = tag
 		category.CreatedTime = time.Now().Unix()
 		result := db.Create(&category)
 		if result.Error != nil {
@@ -57,12 +66,20 @@ func AddCategory(ctx iris.Context) {
 		})
 	}
 }
+
 // 编辑分类
 func EditCategory(ctx iris.Context) {
-	id := ctx.PostValue("id") 
-	categoryname := ctx.PostValue("name") 
+	requestJSON := make(map[string]interface{})
+	if err := ctx.ReadJSON(&requestJSON); err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid JSON"})
+	}
+	categoryname := requestJSON["name"].(string)
+	tag := requestJSON["tag"].(string)
+	id := requestJSON["id"].(float64)
 	var db = provider.GetDefaultDB()
 	var categorys []model.Category
+
 	db.Find(&categorys, "id = ?", id)
 	if len(categorys) != 0 {
 		var category model.Category
@@ -71,8 +88,9 @@ func EditCategory(ctx iris.Context) {
 
 		data := make(map[string]interface{})
 		data["name"] = categoryname //零值字段
+		data["tag"] = tag
 		data["updated_time"] = time.Now().Unix()
-		
+
 		result := db.Model(&category).Updates(data)
 		if result.Error != nil {
 			ctx.JSON(iris.Map{
@@ -96,9 +114,15 @@ func EditCategory(ctx iris.Context) {
 		})
 	}
 }
+
 // 删除分类
 func DeleteCategory(ctx iris.Context) {
-	id := ctx.PostValue("id")
+	requestJSON := map[string]float64{}
+	if err := ctx.ReadJSON(&requestJSON); err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid JSON"})
+	}
+	id := requestJSON["id"]
 	var db = provider.GetDefaultDB()
 	var categorys []model.Category
 	db.Find(&categorys, "id = ?", id)
@@ -107,8 +131,6 @@ func DeleteCategory(ctx iris.Context) {
 
 		db.Where("id = ?", id).Take(&category)
 
-		
-		
 		result := db.Delete(&category)
 		if result.Error != nil {
 			ctx.JSON(iris.Map{

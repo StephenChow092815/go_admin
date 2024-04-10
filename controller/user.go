@@ -23,7 +23,6 @@ func GetUsers(ctx iris.Context) {
 	})
 }
 func GetUserInfo(ctx iris.Context) {
-	fmt.Printf("jinru：%n", 1)
 	jwtInfo := ctx.Values().Get("jwt").(*jwt.Token)
 	id := jwtInfo.Claims.(jwt.MapClaims)["Uid"].(float64)
 	var user model.User

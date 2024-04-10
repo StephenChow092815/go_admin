@@ -1,18 +1,25 @@
 package controller
 
 import (
-	"github.com/kataras/iris/v12"
-	"irisweb/provider"
+	"fmt"
 	"irisweb/middware"
 	"irisweb/model"
+	"irisweb/provider"
 	"time"
-	"fmt"
+
+	"github.com/kataras/iris/v12"
 )
 
 func Login(ctx iris.Context) {
-	username := ctx.PostValue("username") 
-	password := ctx.PostValue("password")
-	fmt.Printf(username)
+
+	// var requestJSON map[string]interface{}
+	requestJSON := map[string]string{}
+	if err := ctx.ReadJSON(&requestJSON); err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid JSON"})
+	}
+	username := requestJSON["username"]
+	password := requestJSON["password"]
 	var db = provider.GetDefaultDB()
 	var users []model.User
 	db.Find(&users, "user_name = ?", username)
@@ -21,7 +28,7 @@ func Login(ctx iris.Context) {
 	} else {
 		if users[0].UserName == username && users[0].Password == password {
 			token := middware.GenerateToken(users[0].Id)
-    		fmt.Println("生成JWT token:", token)
+			fmt.Println("生成JWT token:", token)
 			ctx.JSON(iris.Map{
 				"code": 200,
 				"data": token,
@@ -31,12 +38,17 @@ func Login(ctx iris.Context) {
 			ctx.WriteString("账户或密码错误")
 		}
 	}
-	
-	
+
 }
 func Register(ctx iris.Context) {
-	username := ctx.PostValue("username") 
-	password := ctx.PostValue("password")
+	requestJSON := map[string]string{}
+	if err := ctx.ReadJSON(&requestJSON); err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid JSON"})
+	}
+	fmt.Printf("Map: %v\n", requestJSON)
+	username := requestJSON["username"]
+	password := requestJSON["password"]
 	var db = provider.GetDefaultDB()
 	var users []model.User
 	var user model.User
@@ -56,6 +68,5 @@ func Register(ctx iris.Context) {
 		// 数据存在
 		ctx.WriteString("用户已存在")
 	}
-	
-	
+
 }
