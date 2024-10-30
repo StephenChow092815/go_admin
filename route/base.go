@@ -47,7 +47,7 @@ func Register(app *iris.Application) {
 	app.HandleDir("/uploads", "./uploads")
 	// 用户模块
 	userhandler := app.Party("/user")
-	//公共模块
+	// 公共模块
 	commonhandler := app.Party("/common")
 	// 分类模块
 	categoryhandler := app.Party("/category")
