@@ -11,18 +11,45 @@ import (
 
 // 查询分类列表
 func GetGoodsList(ctx iris.Context) {
-	var db = provider.GetDefaultDB()
-	var goodss []model.Goods
+	GetPagination(ctx, &[]model.Goods{})
+}
 
-	result := db.Find(&goodss)
-	if result.Error != nil {
-		fmt.Printf("查询数据失败：%v", result.Error)
+func GetPagination(ctx iris.Context, modelInstance interface{}) {
+	var db = provider.GetDefaultDB()
+	requestJSON := make(map[string]interface{})
+	if err := ctx.ReadJSON(&requestJSON); err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid JSON"})
 	}
-	ctx.JSON(iris.Map{
-		"code": 200,
-		"data": goodss,
-		"msg":  "Success",
-	})
+
+	var total int64
+
+	current := int(requestJSON["current"].(float64))
+	size := int(requestJSON["size"].(float64))
+
+	db.Model(modelInstance).Count(&total)
+	// 获取页数
+	pages := int64(total / int64(size))
+	if total%int64(size) != 0 {
+		pages++
+	}
+	result := db.Limit(size).Offset((current - 1) * size).Find(modelInstance)
+	if result.Error != nil {
+		fmt.Println("查询数据失败：", result.Error)
+	} else if result.RowsAffected > 0 {
+		fmt.Println("modelInstance：------>", modelInstance)
+		ctx.JSON(iris.Map{
+			"code": 200,
+			"data": model.Pagination{
+				Current: current,
+				Size:    size,
+				Total:   total,
+				Pages:   pages,
+				List:    modelInstance,
+			},
+			"msg": "Success",
+		})
+	}
 }
 
 // 新增分类
