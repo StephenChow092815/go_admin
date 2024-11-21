@@ -36,7 +36,7 @@ func GetPagination(ctx iris.Context, modelInstance interface{}) {
 	result := db.Limit(size).Offset((current - 1) * size).Find(modelInstance)
 	if result.Error != nil {
 		fmt.Println("查询数据失败：", result.Error)
-	} else if result.RowsAffected > 0 {
+	} else if result.RowsAffected >= 0 {
 		fmt.Println("modelInstance：------>", modelInstance)
 		ctx.JSON(iris.Map{
 			"code": 200,
